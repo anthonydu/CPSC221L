@@ -1,0 +1,15 @@
+*
+
+!.gitignore
+
+!Makefile
+
+!*.cpp
+
+!*.h
+
+!*.hpp
+
+!expected
+
+!expected/**
