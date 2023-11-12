@@ -9,10 +9,10 @@
 
 #include "anagram_finder.h"
 
+using std::endl;
+using std::ofstream;
 using std::string;
 using std::vector;
-using std::ofstream;
-using std::endl;
 
 /**
  * Constructs an AnagramFinder based on a filename to read potential
@@ -22,9 +22,8 @@ using std::endl;
  */
 template <template <class K, class V> class Dict>
 AnagramFinder<Dict>::AnagramFinder(const string& ifilename)
-    : file(true), filename(ifilename)
-{
-    /* nothing */
+    : file(true), filename(ifilename) {
+  /* nothing */
 }
 
 /**
@@ -35,9 +34,8 @@ AnagramFinder<Dict>::AnagramFinder(const string& ifilename)
  */
 template <template <class K, class V> class Dict>
 AnagramFinder<Dict>::AnagramFinder(const vector<string>& istrings)
-    : file(false), strings(istrings)
-{
-    /* nothing */
+    : file(false), strings(istrings) {
+  /* nothing */
 }
 
 /**
@@ -48,17 +46,21 @@ AnagramFinder<Dict>::AnagramFinder(const vector<string>& istrings)
  * @return A boolean value indicating whether word is an anagram of test.
  */
 template <template <class K, class V> class Dict>
-bool AnagramFinder<Dict>::checkWord(const string& word, const string& test)
-{
-    /**
-     * @todo Implement this function! You should use the provided
-     * templated hashtable class Dict.
-     */
-
-    (void)word; // prevent warnings... When you implement this function, remove this line.
-    (void)test; // prevent warnings... When you implement this function, remove this line.
-
-    return true;
+bool AnagramFinder<Dict>::checkWord(const string& word, const string& test) {
+  if (word.length() != test.length()) {
+    return false;
+  }
+  Dict<char, int> word_freq(256);
+  Dict<char, int> test_freq(256);
+  for (char c : word) word_freq[c]++;
+  for (char c : test) test_freq[c]++;
+  for (auto it : word_freq) {
+    auto found = test_freq.find(it.first);
+    if (!found || it.second != found) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -67,27 +69,24 @@ bool AnagramFinder<Dict>::checkWord(const string& word, const string& test)
  * @param word The word we wish to find anagrams of inside the finder.
  */
 template <template <class K, class V> class Dict>
-vector<string> AnagramFinder<Dict>::getAnagrams(const string& word)
-{
-    // set up the return vector
-    vector<string> ret;
+vector<string> AnagramFinder<Dict>::getAnagrams(const string& word) {
+  // set up the return vector
+  vector<string> ret;
 
-    if (file) {
-        TextFile infile(filename);
-        string line;
-        vector<string> tests;
-        while (infile.good()) {
-            string test = infile.getNextWord();
-            if (checkWord(word, test))
-                ret.push_back(test);
-        }
-    } else {
-        for (size_t i = 0; i < strings.size(); i++) {
-            if (checkWord(word, strings[i]))
-                ret.push_back(strings[i]);
-        }
+  if (file) {
+    TextFile infile(filename);
+    string line;
+    vector<string> tests;
+    while (infile.good()) {
+      string test = infile.getNextWord();
+      if (checkWord(word, test)) ret.push_back(test);
     }
-    return ret;
+  } else {
+    for (size_t i = 0; i < strings.size(); i++) {
+      if (checkWord(word, strings[i])) ret.push_back(strings[i]);
+    }
+  }
+  return ret;
 }
 
 /**
@@ -99,13 +98,11 @@ vector<string> AnagramFinder<Dict>::getAnagrams(const string& word)
  */
 template <template <class K, class V> class Dict>
 void AnagramFinder<Dict>::writeAnagrams(const string& word,
-                                        const string& output_file)
-{
-    vector<string> anagrams = getAnagrams(word);
-    ofstream outfile(output_file.c_str());
-    if (outfile.is_open()) {
-        for (size_t i = 0; i < anagrams.size(); i++)
-            outfile << anagrams[i] << endl;
-    }
-    outfile.close();
+                                        const string& output_file) {
+  vector<string> anagrams = getAnagrams(word);
+  ofstream outfile(output_file.c_str());
+  if (outfile.is_open()) {
+    for (size_t i = 0; i < anagrams.size(); i++) outfile << anagrams[i] << endl;
+  }
+  outfile.close();
 }
