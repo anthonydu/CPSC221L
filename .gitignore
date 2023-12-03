@@ -1,7 +1,23 @@
-.DS_Store
+*
+
+!Makefile
+
+!*.*
+
+.*
+
+!.gitignore
 
 *.o
 
-out*.png
+*.out
 
 *.profraw
+
+*.7a
+
+out*.png
+
+!*/
+
+.*/
