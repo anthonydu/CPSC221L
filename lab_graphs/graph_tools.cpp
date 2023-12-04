@@ -20,16 +20,25 @@
  * @note You may use the STL stack and queue.
  * @note You may assume the graph is connected.
  */
-int GraphTools::findMinWeight(Graph& graph)
-{
-    // TODO
-    // 1. Label all edges and vertices as unexplored. You will need
-    //    to look in graph.h for the right functions.
+int GraphTools::findMinWeight(Graph& graph) {
+  // TODO
+  // 1. Label all edges and vertices as unexplored. You will need
+  //    to look in graph.h for the right functions.
 
-    // 2. Use the BFS function in graph_tools to find the minimum edge.
-    //    Don't forget to label it.
+  // 2. Use the BFS function in graph_tools to find the minimum edge.
+  //    Don't forget to label it.
 
-    return -1;
+  for (auto edge : graph.getEdges())
+    graph.setEdgeLabel(edge.source, edge.dest, "UNEXPLORED");
+
+  for (auto vertex : graph.getVertices())
+    graph.setVertexLabel(vertex, "UNEXPLORED");
+
+  auto edge = BFS(graph, graph.getStartingVertex());
+
+  graph.setEdgeLabel(edge.source, edge.dest, "MIN");
+
+  return graph.getEdgeWeight(edge.source, edge.dest);
 }
 
 /**
@@ -52,21 +61,58 @@ int GraphTools::findMinWeight(Graph& graph)
  * @hint In order to draw (and correctly count) the edges between two
  *  vertices, you'll have to remember each vertex's parent somehow.
  */
-int GraphTools::findShortestPath(Graph& graph, Vertex start, Vertex end)
-{
-    unordered_map<Vertex, Vertex> parent;
+int GraphTools::findShortestPath(Graph& graph, Vertex start, Vertex end) {
+  unordered_map<Vertex, Vertex> parent;
 
-    // TODO
-    // 1. Set all vertices as unexplored
+  // TODO
+  // 1. Set all vertices as unexplored
 
-    // 2. Do a modified BFS. See the BFS function below as a guideline, but
-    //    your BFS here only needs to populate the "parent" map and stop once the short-
-    //    est path has been found.
+  // 2. Do a modified BFS. See the BFS function below as a guideline, but
+  //    your BFS here only needs to populate the "parent" map and stop once the
+  //    short- est path has been found.
 
-    // 3. Use the unordered map to trace from a path from the end to the start,
-    //    counting edges. You should set edges to "minpath" here too.
+  // 3. Use the unordered map to trace from a path from the end to the start,
+  //    counting edges. You should set edges to "minpath" here too.
 
-    return -1;
+  // for (auto vertex : graph.getVertices())
+  //   graph.setVertexLabel(vertex, "UNEXPLORED");
+
+  for (auto vertex : graph.getVertices())
+    graph.setVertexLabel(vertex, "UNEXPLORED");
+
+  queue<Vertex> q;
+  graph.setVertexLabel(start, "VISITED");
+  q.push(start);
+
+  while (!q.empty()) {
+    Vertex v = q.front();
+    q.pop();
+    vector<Vertex> adj = graph.getAdjacent(v);
+    for (size_t i = 0; i < adj.size(); ++i) {
+      if (graph.getVertexLabel(adj[i]) == "UNEXPLORED") {
+        graph.setEdgeLabel(v, adj[i], "DISCOVERY");
+        graph.setVertexLabel(adj[i], "VISITED");
+        q.push(adj[i]);
+        parent[adj[i]] = v;
+        if (adj[i] == end) {
+          auto child = end;
+          auto pit = parent.find(end);
+          int dist = 0;
+          while (pit != parent.end()) {
+            auto par = pit->second;
+            graph.setEdgeLabel(child, par, "MINPATH");
+            child = par;
+            pit = parent.find(par);
+            dist++;
+          }
+          return dist;
+        }
+      } else if (graph.getEdgeLabel(v, adj[i]) == "UNEXPLORED") {
+        graph.setEdgeLabel(v, adj[i], "CROSS");
+      }
+    }
+  }
+  return -1;
 }
 
 /**
@@ -82,9 +128,20 @@ int GraphTools::findShortestPath(Graph& graph, Vertex start, Vertex end)
  *
  * @note You may call std::sort instead of creating a priority queue.
  */
-void GraphTools::findMST(Graph& graph)
-{
-    // TODO
+void GraphTools::findMST(Graph& graph) {
+  DisjointSets set;
+  for (auto v : graph.getVertices()) {
+    set.addelements(v);
+  }
+  auto edges = graph.getEdges();
+  std::sort(edges.begin(), edges.end(), [](Edge a, Edge b) {
+    return a.weight < b.weight;
+  });
+  for (auto edge : edges) {
+    if (set.find(edge.source) != set.find(edge.dest))
+      graph.setEdgeLabel(edge.source, edge.dest, "MST");
+    set.setunion(edge.source, edge.dest);
+  }
 }
 
 /**
@@ -94,39 +151,38 @@ void GraphTools::findMST(Graph& graph)
  * @param start - the vertex to start the BFS from
  * @return the minimum weight edge
  */
-Edge GraphTools::BFS(Graph& graph, Vertex start)
-{
-    queue<Vertex> q;
-    graph.setVertexLabel(start, "VISITED");
-    q.push(start);
-    Edge min;
-    min.weight = INT_MAX;
+Edge GraphTools::BFS(Graph& graph, Vertex start) {
+  queue<Vertex> q;
+  graph.setVertexLabel(start, "VISITED");
+  q.push(start);
+  Edge min;
+  min.weight = INT_MAX;
 
-    while (!q.empty()) {
-        Vertex v = q.front();
-        q.pop();
-        vector<Vertex> adj = graph.getAdjacent(v);
-        for (size_t i = 0; i < adj.size(); ++i) {
-            if (graph.getVertexLabel(adj[i]) == "UNEXPLORED") {
-                graph.setEdgeLabel(v, adj[i], "DISCOVERY");
-                graph.setVertexLabel(adj[i], "VISITED");
-                q.push(adj[i]);
-                int weight = graph.getEdgeWeight(v, adj[i]);
-                if (weight < min.weight) {
-                    min.source = v;
-                    min.dest = adj[i];
-                    min.weight = weight;
-                }
-            } else if (graph.getEdgeLabel(v, adj[i]) == "UNEXPLORED") {
-                graph.setEdgeLabel(v, adj[i], "CROSS");
-                int weight = graph.getEdgeWeight(v, adj[i]);
-                if (weight < min.weight) {
-                    min.source = v;
-                    min.dest = adj[i];
-                    min.weight = weight;
-                }
-            }
+  while (!q.empty()) {
+    Vertex v = q.front();
+    q.pop();
+    vector<Vertex> adj = graph.getAdjacent(v);
+    for (size_t i = 0; i < adj.size(); ++i) {
+      if (graph.getVertexLabel(adj[i]) == "UNEXPLORED") {
+        graph.setEdgeLabel(v, adj[i], "DISCOVERY");
+        graph.setVertexLabel(adj[i], "VISITED");
+        q.push(adj[i]);
+        int weight = graph.getEdgeWeight(v, adj[i]);
+        if (weight < min.weight) {
+          min.source = v;
+          min.dest = adj[i];
+          min.weight = weight;
         }
+      } else if (graph.getEdgeLabel(v, adj[i]) == "UNEXPLORED") {
+        graph.setEdgeLabel(v, adj[i], "CROSS");
+        int weight = graph.getEdgeWeight(v, adj[i]);
+        if (weight < min.weight) {
+          min.source = v;
+          min.dest = adj[i];
+          min.weight = weight;
+        }
+      }
     }
-    return min;
+  }
+  return min;
 }
